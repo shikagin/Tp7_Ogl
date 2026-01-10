@@ -1,0 +1,227 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.sun.mail:javax.mail:1.6.2'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'jacoco'
+    id "org.sonarqube" version "4.4.1.3373"
+    id "com.github.spacialcircumstances.gradle-cucumber-reporting" version "0.1.25"
+    id 'maven-publish'
+}
+
+group = 'com.example'
+version = '1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'io.cucumber:cucumber-java:6.0.0'
+    testImplementation 'io.cucumber:cucumber-junit:6.0.0'
+    testImplementation 'junit:junit:4.13.1'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+}
+
+test {
+    useJUnit()
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        html.outputLocation = file("${buildDir}/reports/jacoco")
+    }
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    destinationDir = file("${buildDir}/docs/javadoc")
+    options.author = true
+    options.version = true
+    options.windowTitle = "TP5 - Documentation API"
+    options.docTitle = "TP5 - Documentation de l'API"
+}
+
+// Définir les tâches pour créer les JARs sources et javadoc
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    archiveClassifier = 'sources'
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+}
+
+cucumberReports {
+    outputDir = file('build/reports/cucumber')
+    buildId = '0'
+    reports = files('reports/example-report.json')
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "tp5"
+        property "sonar.projectName", "TP5 - OGL"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.token", "votre_token_ici"
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}
+
+tasks.sonar.dependsOn(test)
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.example'
+            artifactId = 'meki'
+            version = '1.0'
+
+            from components.java
+
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+
+    repositories {
+        maven {
+            url = project.findProperty("myMavenRepoUrl") ?: "https://mymavenrepo.com/repo/cEmjfkxugPlzLxXg1A2B/"
+
+            credentials {
+                username = project.findProperty("myMavenRepoUsername") ?: "myMavenRepo"
+                password = project.findProperty("myMavenRepoPassword") ?: "test0005"
+            }
+
+            authentication {
+                basic(BasicAuthentication)
+            }
+        }
+    }
+}
+
+task notifySlack {
+    doLast {
+        def webhookUrl = project.findProperty("slackWebhookUrl") ?: System.getenv("SLACK_WEBHOOK_URL")
+
+        def message = """{
+            "text": "Déploiement réussi!",
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Projet:* ${project.name}\\n*Version:* ${project.version}\\n*Status:* ✅ Déployé avec succès"
+                    }
+                }
+            ]
+        }"""
+
+        def connection = new URL(webhookUrl).openConnection()
+        connection.setRequestMethod("POST")
+        connection.setDoOutput(true)
+        connection.setRequestProperty("Content-Type", "application/json")
+
+        connection.outputStream.withWriter { writer ->
+            writer.write(message)
+        }
+
+        def responseCode = connection.responseCode
+        if (responseCode == 200) {
+            println "Notification Slack envoyée avec succès!"
+        } else {
+            println "Erreur lors de l'envoi de la notification Slack: ${responseCode}"
+        }
+    }
+}
+
+task notifyEmail {
+    doLast {
+        def gmailUsername = project.findProperty("gmailUsername") ?: System.getenv("GMAIL_USERNAME")
+        def gmailPassword = project.findProperty("gmailAppPassword") ?: System.getenv("GMAIL_APP_PASSWORD")
+        def recipientEmail = project.findProperty("recipientEmail") ?: System.getenv("RECIPIENT_EMAIL")
+
+        def props = new Properties()
+        props.put("mail.smtp.auth", "true")
+        props.put("mail.smtp.starttls.enable", "true")
+        props.put("mail.smtp.host", "smtp.gmail.com")
+        props.put("mail.smtp.port", "587")
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2")
+
+        def session = javax.mail.Session.getInstance(props,
+                new javax.mail.Authenticator() {
+                    protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
+                        return new javax.mail.PasswordAuthentication(gmailUsername, gmailPassword)
+                    }
+                })
+
+        try {
+            def message = new javax.mail.internet.MimeMessage(session)
+            message.setFrom(new javax.mail.internet.InternetAddress(gmailUsername))
+            message.setRecipients(javax.mail.Message.RecipientType.TO,
+                    javax.mail.internet.InternetAddress.parse(recipientEmail))
+            message.setSubject("✅ Déploiement réussi - ${project.name} v${project.version}")
+
+            def emailBody = """
+                <html>
+                <body style="font-family: Arial, sans-serif;">
+                    <h2 style="color: #4CAF50;">✅ Déploiement réussi!</h2>
+                    <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Projet:</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${project.name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Version:</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${project.version}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Date:</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${new Date()}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Status:</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd;"> Déployé avec succès sur Maven Repository</td>
+                        </tr>
+                    </table>
+                    <p style="margin-top: 20px; color: #666;">
+                        Le déploiement a été effectué avec succès. Tous les artefacts sont disponibles sur le repository Maven.
+                    </p>
+                </body>
+                </html>
+            """
+
+            message.setContent(emailBody, "text/html; charset=utf-8")
+
+            javax.mail.Transport.send(message)
+            println " Email de notification envoyé avec succès à ${recipientEmail}!"
+
+        } catch (Exception e) {
+            println " Erreur lors de l'envoi de l'email: ${e.message}"
+            e.printStackTrace()
+        }
+    }
+}
+
+publish.finalizedBy notifySlack, notifyEmail
