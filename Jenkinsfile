@@ -9,17 +9,16 @@ pipeline {
     }
 
     stages {
-        stage('Test') {
+        stage('Test & Code Analysis') {
             steps {
-                echo '🧪 Running unit tests...'
-                sh './gradlew test'
-                sh './gradlew jacocoTestReport'
-                sh './gradlew cucumberReports'
+                echo '🧪 Running tests and SonarQube analysis...'
+                // This will run tests AND sonar analysis together
+                sh './gradlew clean test jacocoTestReport sonar'
 
                 // Archive test results
                 junit '**/build/test-results/test/*.xml'
 
-                // Publish HTML reports with required parameters
+                // Publish HTML reports
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -28,21 +27,15 @@ pipeline {
                     reportFiles: 'index.html',
                     reportName: 'Unit Test Report'
                 ])
+
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: 'build/reports/cucumber',
-                    reportFiles: 'cucumber-html-reports/overview-features.html',
-                    reportName: 'Cucumber Report'
+                    reportDir: 'build/reports/jacoco',
+                    reportFiles: 'index.html',
+                    reportName: 'Jacoco Coverage Report'
                 ])
-            }
-        }
-
-        stage('Code Analysis') {
-            steps {
-                echo '🔍 Running SonarQube analysis...'
-                sh './gradlew sonar'
             }
         }
 
@@ -58,14 +51,12 @@ pipeline {
         stage('Build') {
             steps {
                 echo '🏗️ Building JAR and documentation...'
-                sh './gradlew clean build'
+                sh './gradlew build -x test'  // Skip tests since we already ran them
                 sh './gradlew javadoc'
                 sh './gradlew sourcesJar javadocJar'
 
-                // Archive artifacts
                 archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
 
-                // Publish Javadoc
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -80,7 +71,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '🚀 Deploying to Maven repository...'
-                sh './gradlew publish'
+                sh './gradlew publish -x test'  // Skip tests
             }
         }
 
