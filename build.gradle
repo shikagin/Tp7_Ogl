@@ -41,13 +41,12 @@ jacoco {
     toolVersion = "0.8.11"
 }
 
+
+
 jacocoTestReport {
     dependsOn test
     reports {
-        xml.required = true
-        xml.outputLocation = file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
-        html.required = true
-        html.outputLocation = file("${buildDir}/reports/jacoco/html")
+        html.destination file("$buildDir/reports/jacoco/html")
     }
 }
 
