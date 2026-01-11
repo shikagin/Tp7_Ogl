@@ -1,21 +1,11 @@
 pipeline {
     agent any
 
-//     environment {
-//         GMAIL_USERNAME = credentials('gmail-username')
-//         GMAIL_APP_PASSWORD = credentials('gmail-app-password')
-//         RECIPIENT_EMAIL = credentials('recipient-email')
-//         SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
-//         SONAR_TOKEN = credentials('sonarqube-token')
-//     }
-
     stages {
         stage('Test & Code Analysis') {
             steps {
-                echo ' Running tests and SonarQube analysis...'
+                echo 'Running tests and SonarQube analysis...'
                 sh './gradlew clean test jacocoTestReport sonar'
-
-
                 junit '**/build/test-results/test/*.xml'
 
                 // Publish Unit Test Report
@@ -33,29 +23,26 @@ pipeline {
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
                     keepAll: true,
-                    reportDir: 'build/reports/jacoco/test/html',
+                    reportDir: 'build/reports/jacoco/html',
                     reportFiles: 'index.html',
                     reportName: 'Jacoco Coverage Report'
                 ])
             }
         }
-    }
 
-
-         stage('Code Quality') {
-             steps {
+        stage('Code Quality') {
+            steps {
                 echo '========== Phase Code Quality =========='
-
                 // Vérification du Quality Gate - arrêt en cas de Failed
                 timeout(time: 5, unit: 'MINUTES') {
-                   waitForQualityGate abortPipeline: true
+                    waitForQualityGate abortPipeline: true
                 }
-             }
-          }
+            }
+        }
 
-         stage('Build') {
-             steps {
-                 echo ' Building JAR and documentation...'
+        stage('Build') {
+            steps {
+                echo 'Building JAR and documentation...'
                 sh './gradlew build -x test'
                 sh './gradlew javadoc'
                 sh './gradlew sourcesJar javadocJar'
@@ -75,12 +62,13 @@ pipeline {
             }
         }
 
-         stage('Deploy') {
-             steps {
-                 echo ' Deploying to Maven repository...'
-                 sh './gradlew publish -x test'
-             }
-         }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying to Maven repository...'
+                sh './gradlew publish -x test'
+            }
+        }
+    }
 }
 
 
