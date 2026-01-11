@@ -85,24 +85,24 @@ pipeline {
 //         }
     }
 
-    post {
-        failure {
-            echo '❌ Pipeline failed! Sending failure notifications...'
-            emailext (
-                subject: "Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: """
-                    <h2 style="color: red;">❌ Build Failed!</h2>
-                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                    <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
-                    <p><strong>Failed Stage:</strong> Check console output</p>
-                    <p><a href="${env.BUILD_URL}">View Build</a></p>
-                """,
-                to: "${env.RECIPIENT_EMAIL}",
-                mimeType: 'text/html'
-            )
-        }
-        success {
-            echo '✅ Pipeline completed successfully!'
-        }
-    }
+//     post {
+//         failure {
+//             echo '❌ Pipeline failed! Sending failure notifications...'
+//             emailext (
+//                 subject: "Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+//                 body: """
+//                     <h2 style="color: red;">❌ Build Failed!</h2>
+//                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
+//                     <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
+//                     <p><strong>Failed Stage:</strong> Check console output</p>
+//                     <p><a href="${env.BUILD_URL}">View Build</a></p>
+//                 """,
+//                 to: "${env.RECIPIENT_EMAIL}",
+//                 mimeType: 'text/html'
+//             )
+//         }
+//         success {
+//             echo '✅ Pipeline completed successfully!'
+//         }
+//     }
 }

@@ -11,7 +11,6 @@ plugins {
     id 'java'
     id 'jacoco'
     id "org.sonarqube" version "3.5.0.2730"
-    id "com.github.spacialcircumstances.gradle-cucumber-reporting" version "0.1.25"
     id 'maven-publish'
 }
 
@@ -72,11 +71,7 @@ task javadocJar(type: Jar) {
     archiveClassifier = 'javadoc'
 }
 
-cucumberReports {
-    outputDir = file('build/reports/cucumber')
-    buildId = '0'
-    reports = files('reports/example-report.json')
-}
+
 
 sonar {
     properties {
@@ -121,87 +116,87 @@ publishing {
     }
 }
 
-task notifySlack {
-    doLast {
-        def webhookUrl = project.findProperty("slackWebhookUrl") ?: System.getenv("SLACK_WEBHOOK_URL")
-
-        def message = """{
-            "text": "Déploiement réussi!",
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "*Projet:* ${project.name}\\n*Version:* ${project.version}\\n*Status:* ✅ Déployé avec succès"
-                    }
-                }
-            ]
-        }"""
-
-        def connection = new URL(webhookUrl).openConnection()
-        connection.setRequestMethod("POST")
-        connection.setDoOutput(true)
-        connection.setRequestProperty("Content-Type", "application/json")
-
-        connection.outputStream.withWriter { writer ->
-            writer.write(message)
-        }
-
-        def responseCode = connection.responseCode
-        if (responseCode == 200) {
-            println "Notification Slack envoyée avec succès!"
-        } else {
-            println "Erreur lors de l'envoi de la notification Slack: ${responseCode}"
-        }
-    }
-}
-
-import javax.mail.*
-import javax.mail.internet.*
-
-task notifyEmail {
-    doLast {
-        println "Envoi d'email en cours..."
-
-        def props = new Properties()
-        props.put("mail.smtp.auth", "true")
-        props.put("mail.smtp.starttls.enable", "true")
-        props.put("mail.smtp.host", "smtp.gmail.com")
-        props.put("mail.smtp.port", "587")
-        props.put("mail.smtp.ssl.trust", "smtp.gmail.com")
-        props.put("mail.smtp.ssl.protocols", "TLSv1.2")
-
-        def username = "rafikahouda2005@gmail.com"
-        def password = "nprs cdpz fnbc assq"
-        def recipient = "rafikahouda2005@gmail.com"
-
-        try {
-            def session = Session.getInstance(props, new Authenticator() {
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(username, password)
-                }
-            })
-
-            def message = new MimeMessage(session)
-            message.setFrom(new InternetAddress(username))
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient))
-            message.setSubject("Déploiement réussi - ${project.name}")
-            message.setText("""
-            Déploiement réussi!
-
-            Projet: ${project.name}
-            Version: ${project.version}
-            Date: ${new Date()}
-                        """)
-
-            Transport.send(message)
-            println "Email envoyé avec succès à ${recipient}!"
-
-        } catch (Exception e) {
-            println "Erreur: ${e.message}"
-            e.printStackTrace()
-        }
-    }
-}
-
-publish.finalizedBy notifySlack, notifyEmail
+//task notifySlack {
+//    doLast {
+//        def webhookUrl = project.findProperty("slackWebhookUrl") ?: System.getenv("SLACK_WEBHOOK_URL")
+//
+//        def message = """{
+//            "text": "Déploiement réussi!",
+//            "blocks": [
+//                {
+//                    "type": "section",
+//                    "text": {
+//                        "type": "mrkdwn",
+//                        "text": "*Projet:* ${project.name}\\n*Version:* ${project.version}\\n*Status:* ✅ Déployé avec succès"
+//                    }
+//                }
+//            ]
+//        }"""
+//
+//        def connection = new URL(webhookUrl).openConnection()
+//        connection.setRequestMethod("POST")
+//        connection.setDoOutput(true)
+//        connection.setRequestProperty("Content-Type", "application/json")
+//
+//        connection.outputStream.withWriter { writer ->
+//            writer.write(message)
+//        }
+//
+//        def responseCode = connection.responseCode
+//        if (responseCode == 200) {
+//            println "Notification Slack envoyée avec succès!"
+//        } else {
+//            println "Erreur lors de l'envoi de la notification Slack: ${responseCode}"
+//        }
+//    }
+//}
+//
+////import javax.mail.*
+////import javax.mail.internet.*
+////
+////task notifyEmail {
+////    doLast {
+////        println "Envoi d'email en cours..."
+////
+////        def props = new Properties()
+////        props.put("mail.smtp.auth", "true")
+////        props.put("mail.smtp.starttls.enable", "true")
+////        props.put("mail.smtp.host", "smtp.gmail.com")
+////        props.put("mail.smtp.port", "587")
+////        props.put("mail.smtp.ssl.trust", "smtp.gmail.com")
+////        props.put("mail.smtp.ssl.protocols", "TLSv1.2")
+////
+////        def username = "rafikahouda2005@gmail.com"
+////        def password = "nprs cdpz fnbc assq"
+////        def recipient = "rafikahouda2005@gmail.com"
+////
+////        try {
+////            def session = Session.getInstance(props, new Authenticator() {
+////                protected PasswordAuthentication getPasswordAuthentication() {
+////                    return new PasswordAuthentication(username, password)
+////                }
+////            })
+////
+////            def message = new MimeMessage(session)
+////            message.setFrom(new InternetAddress(username))
+////            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient))
+////            message.setSubject("Déploiement réussi - ${project.name}")
+////            message.setText("""
+////            Déploiement réussi!
+////
+////            Projet: ${project.name}
+////            Version: ${project.version}
+////            Date: ${new Date()}
+////                        """)
+////
+////            Transport.send(message)
+////            println "Email envoyé avec succès à ${recipient}!"
+////
+////        } catch (Exception e) {
+////            println "Erreur: ${e.message}"
+////            e.printStackTrace()
+////        }
+////    }
+////}
+//
+////publish.finalizedBy notifySlack, notifyEmail
