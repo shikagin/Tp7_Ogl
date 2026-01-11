@@ -76,7 +76,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying to Maven repository...'
-                sh './gradlew publish -x test'
+                sh './gradlew publish -x test --no-daemon'
             }
         }
     }
