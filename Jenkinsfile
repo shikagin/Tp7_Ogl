@@ -6,6 +6,7 @@ pipeline {
         GMAIL_APP_PASSWORD = credentials('gmail-app-password')
         RECIPIENT_EMAIL = credentials('recipient-email')
         SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
+        SONAR_TOKEN = credentials('sonarqube-token')
     }
 
     stages {

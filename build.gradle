@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id 'java'
     id 'jacoco'
-    id "org.sonarqube" version "4.4.1.3373"
+    id "org.sonarqube" version "3.5.0.2730"
     id "com.github.spacialcircumstances.gradle-cucumber-reporting" version "0.1.25"
     id 'maven-publish'
 }
@@ -83,7 +83,7 @@ sonar {
         property "sonar.projectKey", "tp5"
         property "sonar.projectName", "TP5 - OGL"
         property "sonar.host.url", "http://localhost:9000"
-        property "sonar.token", "sqa_69f58d784f9638afb4838815067d03c116b22e55"
+        property "sonar.token", "sqp_6853f6df3dd207213f86812dd463d3041cade57d"
         property "sonar.java.coveragePlugin", "jacoco"
         property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
     }
