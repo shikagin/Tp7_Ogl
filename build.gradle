@@ -1,116 +1,207 @@
-pipeline {
-    agent any
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.sun.mail:javax.mail:1.6.2'
+    }
+}
 
-    environment {
-        GMAIL_USERNAME = credentials('gmail-username')
-        GMAIL_APP_PASSWORD = credentials('gmail-app-password')
-        RECIPIENT_EMAIL = credentials('recipient-email')
-        SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
+plugins {
+    id 'java'
+    id 'jacoco'
+    id "org.sonarqube" version "4.4.1.3373"
+    id "com.github.spacialcircumstances.gradle-cucumber-reporting" version "0.1.25"
+    id 'maven-publish'
+}
+
+group = 'com.example'
+version = '1.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'io.cucumber:cucumber-java:6.0.0'
+    testImplementation 'io.cucumber:cucumber-junit:6.0.0'
+    testImplementation 'junit:junit:4.13.1'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+}
+
+test {
+    useJUnit()
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        html.outputLocation = file("${buildDir}/reports/jacoco")
+    }
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    destinationDir = file("${buildDir}/docs/javadoc")
+    options.author = true
+    options.version = true
+    options.windowTitle = "TP5 - Documentation API"
+    options.docTitle = "TP5 - Documentation de l'API"
+}
+
+// Définir les tâches pour créer les JARs sources et javadoc
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    archiveClassifier = 'sources'
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+}
+
+cucumberReports {
+    outputDir = file('build/reports/cucumber')
+    buildId = '0'
+    reports = files('reports/example-report.json')
+}
+
+sonar {
+    properties {
+        property "sonar.projectKey", "tp5"
+        property "sonar.projectName", "TP5 - OGL"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.token", "sqa_69f58d784f9638afb4838815067d03c116b22e55"
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}
+
+tasks.sonar.dependsOn(test)
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.example'
+            artifactId = 'meki'
+            version = '1.0'
+
+            from components.java
+
+            artifact sourcesJar
+            artifact javadocJar
+        }
     }
 
-    stages {
-        stage('Test') {
-            steps {
-                echo '🧪 Running unit tests...'
-                sh './gradlew test'
-                sh './gradlew jacocoTestReport'
-                sh './gradlew cucumberReports'
+    repositories {
+        maven {
+            url = project.findProperty("myMavenRepoUrl") ?: "https://mymavenrepo.com/repo/cEmjfkxugPlzLxXg1A2B/"
 
-                // Archive test results
-                junit '**/build/test-results/test/*.xml'
-
-                // Publish HTML reports with required parameters
-                publishHTML([
-                        reportDir: 'build/reports/tests/test',
-                        reportFiles: 'index.html',
-                        reportName: 'Unit Test Report',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: true
-                ])
-                publishHTML([
-                        reportDir: 'build/reports/cucumber',
-                        reportFiles: 'cucumber-html-reports/overview-features.html',
-                        reportName: 'Cucumber Report',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: true
-                ])
+            credentials {
+                username = project.findProperty("myMavenRepoUsername") ?: "myMavenRepo"
+                password = project.findProperty("myMavenRepoPassword") ?: "test0005"
             }
-        }
 
-        stage('Code Analysis') {
-            steps {
-                echo '🔍 Running SonarQube analysis...'
-                sh './gradlew sonar'
+            authentication {
+                basic(BasicAuthentication)
             }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                echo '✅ Checking Quality Gate...'
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
-        stage('Build') {
-            steps {
-                echo '🏗️ Building JAR and documentation...'
-                sh './gradlew clean build'
-                sh './gradlew javadoc'
-                sh './gradlew sourcesJar javadocJar'
-
-                // Archive artifacts
-                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
-
-                // Publish Javadoc
-                publishHTML([
-                        reportDir: 'build/docs/javadoc',
-                        reportFiles: 'index.html',
-                        reportName: 'Javadoc',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: true
-                ])
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo '🚀 Deploying to Maven repository...'
-                sh './gradlew publish'
-            }
-        }
-
-        stage('Notification') {
-            steps {
-                echo '📧 Sending notifications...'
-                sh './gradlew notifyEmail'
-                sh './gradlew notifySlack'
-            }
-        }
-    }
-
-    post {
-        failure {
-            echo '❌ Pipeline failed! Sending failure notifications...'
-            emailext (
-                    subject: "Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: """
-                    <h2 style="color: red;">❌ Build Failed!</h2>
-                    <p><strong>Job:</strong> ${env.JOB_NAME}</p>
-                    <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
-                    <p><strong>Failed Stage:</strong> Check console output</p>
-                    <p><a href="${env.BUILD_URL}">View Build</a></p>
-                """,
-                    to: "${env.RECIPIENT_EMAIL}",
-                    mimeType: 'text/html'
-            )
-        }
-        success {
-            echo '✅ Pipeline completed successfully!'
         }
     }
 }
+
+task notifySlack {
+    doLast {
+        def webhookUrl = project.findProperty("slackWebhookUrl") ?: System.getenv("SLACK_WEBHOOK_URL")
+
+        def message = """{
+            "text": "Déploiement réussi!",
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Projet:* ${project.name}\\n*Version:* ${project.version}\\n*Status:* ✅ Déployé avec succès"
+                    }
+                }
+            ]
+        }"""
+
+        def connection = new URL(webhookUrl).openConnection()
+        connection.setRequestMethod("POST")
+        connection.setDoOutput(true)
+        connection.setRequestProperty("Content-Type", "application/json")
+
+        connection.outputStream.withWriter { writer ->
+            writer.write(message)
+        }
+
+        def responseCode = connection.responseCode
+        if (responseCode == 200) {
+            println "Notification Slack envoyée avec succès!"
+        } else {
+            println "Erreur lors de l'envoi de la notification Slack: ${responseCode}"
+        }
+    }
+}
+
+import javax.mail.*
+import javax.mail.internet.*
+
+task notifyEmail {
+    doLast {
+        println "Envoi d'email en cours..."
+
+        def props = new Properties()
+        props.put("mail.smtp.auth", "true")
+        props.put("mail.smtp.starttls.enable", "true")
+        props.put("mail.smtp.host", "smtp.gmail.com")
+        props.put("mail.smtp.port", "587")
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com")
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2")
+
+        def username = "rafikahouda2005@gmail.com"
+        def password = "nprs cdpz fnbc assq "
+        def recipient = "rafikahouda2005@gmail.com"
+
+        try {
+            def session = Session.getInstance(props, new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(username, password)
+                }
+            })
+
+            def message = new MimeMessage(session)
+            message.setFrom(new InternetAddress(username))
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient))
+            message.setSubject("Déploiement réussi - ${project.name}")
+            message.setText("""
+            Déploiement réussi!
+
+            Projet: ${project.name}
+            Version: ${project.version}
+            Date: ${new Date()}
+                        """)
+
+            Transport.send(message)
+            println "Email envoyé avec succès à ${recipient}!"
+
+        } catch (Exception e) {
+            println "Erreur: ${e.message}"
+            e.printStackTrace()
+        }
+    }
+}
+
+publish.finalizedBy notifySlack, notifyEmail

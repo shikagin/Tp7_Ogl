@@ -1,104 +1,116 @@
 pipeline {
-	agent any
+    agent any
 
-	environment {
+    environment {
+        GMAIL_USERNAME = credentials('gmail-username')
+        GMAIL_APP_PASSWORD = credentials('gmail-app-password')
+        RECIPIENT_EMAIL = credentials('recipient-email')
+        SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
+    }
 
-		GMAIL_USERNAME = credentials('gmail-username')
-		GMAIL_APP_PASSWORD = credentials('gmail-app-password')
-		RECIPIENT_EMAIL = credentials('recipient-email')
-		SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
-	}
+    stages {
+        stage('Test') {
+            steps {
+                echo '🧪 Running unit tests...'
+                sh './gradlew test'
+                sh './gradlew jacocoTestReport'
+                sh './gradlew cucumberReports'
 
-	stages {
-		stage('Test') {
-			steps {
-				echo '🧪 Running unit tests...'
-				sh './gradlew test'
-				sh './gradlew jacocoTestReport'
-				sh './gradlew cucumberReports'
+                // Archive test results
+                junit '**/build/test-results/test/*.xml'
 
-				// Archive test results
-				junit '**/build/test-results/test/*.xml'
-				publishHTML([
-					reportDir: 'build/reports/tests/test',
-					reportFiles: 'index.html',
-					reportName: 'Unit Test Report'
-				])
-				publishHTML([
-					reportDir: 'build/reports/cucumber',
-					reportFiles: 'cucumber-html-reports/overview-features.html',
-					reportName: 'Cucumber Report'
-				])
-			}
-		}
+                // Publish HTML reports with required parameters
+                publishHTML([
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'build/reports/tests/test',
+                    reportFiles: 'index.html',
+                    reportName: 'Unit Test Report'
+                ])
+                publishHTML([
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'build/reports/cucumber',
+                    reportFiles: 'cucumber-html-reports/overview-features.html',
+                    reportName: 'Cucumber Report'
+                ])
+            }
+        }
 
-		stage('Code Analysis') {
-			steps {
-				echo '🔍 Running SonarQube analysis...'
-				sh './gradlew sonar'
-			}
-		}
+        stage('Code Analysis') {
+            steps {
+                echo '🔍 Running SonarQube analysis...'
+                sh './gradlew sonar'
+            }
+        }
 
-		stage('Quality Gate') {
-			steps {
-				echo '✅ Checking Quality Gate...'
-				timeout(time: 5, unit: 'MINUTES') {
-					waitForQualityGate abortPipeline: true
-				}
-			}
-		}
+        stage('Quality Gate') {
+            steps {
+                echo '✅ Checking Quality Gate...'
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
-		stage('Build') {
-			steps {
-				echo '🏗️ Building JAR and documentation...'
-				sh './gradlew clean build'
-				sh './gradlew javadoc'
-				sh './gradlew sourcesJar javadocJar'
+        stage('Build') {
+            steps {
+                echo '🏗️ Building JAR and documentation...'
+                sh './gradlew clean build'
+                sh './gradlew javadoc'
+                sh './gradlew sourcesJar javadocJar'
 
-				// Archive artifacts
-				archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
-				publishHTML([
-					reportDir: 'build/docs/javadoc',
-					reportFiles: 'index.html',
-					reportName: 'Javadoc'
-				])
-			}
-		}
+                // Archive artifacts
+                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
 
-		stage('Deploy') {
-			steps {
-				echo '🚀 Deploying to Maven repository...'
-				sh './gradlew publish'
-			}
-		}
+                // Publish Javadoc
+                publishHTML([
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'build/docs/javadoc',
+                    reportFiles: 'index.html',
+                    reportName: 'Javadoc'
+                ])
+            }
+        }
 
-		stage('Notification') {
-			steps {
-				echo '📧 Sending notifications...'
-				sh './gradlew notifyEmail'
-				sh './gradlew notifySlack'
-			}
-		}
-	}
+        stage('Deploy') {
+            steps {
+                echo '🚀 Deploying to Maven repository...'
+                sh './gradlew publish'
+            }
+        }
 
-	post {
-		failure {
-			echo ' Pipeline failed! Sending failure notifications...'
-			emailext (
-				subject: " Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-				body: """
+        stage('Notification') {
+            steps {
+                echo '📧 Sending notifications...'
+                sh './gradlew notifyEmail'
+                sh './gradlew notifySlack'
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo '❌ Pipeline failed! Sending failure notifications...'
+            emailext (
+                subject: "Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
                     <h2 style="color: red;">❌ Build Failed!</h2>
                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
                     <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
                     <p><strong>Failed Stage:</strong> Check console output</p>
                     <p><a href="${env.BUILD_URL}">View Build</a></p>
                 """,
-				to: "${env.RECIPIENT_EMAIL}",
-				mimeType: 'text/html'
-			)
-		}
-		success {
-			echo 'Pipeline completed successfully!'
-		}
-	}
+                to: "${env.RECIPIENT_EMAIL}",
+                mimeType: 'text/html'
+            )
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+    }
 }
