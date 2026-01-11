@@ -13,13 +13,13 @@ pipeline {
         stage('Test & Code Analysis') {
             steps {
                 echo '🧪 Running tests and SonarQube analysis...'
-                // This will run tests AND sonar analysis together
+
                 sh './gradlew clean test jacocoTestReport sonar'
 
-                // Archive test results
+
                 junit '**/build/test-results/test/*.xml'
 
-                // Publish HTML reports
+
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -76,13 +76,13 @@ pipeline {
             }
         }
 
-        stage('Notification') {
-            steps {
-                echo '📧 Sending notifications...'
-                sh './gradlew notifyEmail'
-                sh './gradlew notifySlack'
-            }
-        }
+//         stage('Notification') {
+//             steps {
+//                 echo '📧 Sending notifications...'
+//                 sh './gradlew notifyEmail'
+//                 sh './gradlew notifySlack'
+//             }
+//         }
     }
 
     post {
