@@ -100,7 +100,7 @@ pipeline {
                 // Slack notification
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     slackSend(
-                        channel: '#all-ogltp5',
+                        channel: '#jenkins',
                         color: 'good',
                         message: " Build SUCCESS\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
                     )
