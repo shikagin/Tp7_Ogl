@@ -83,7 +83,7 @@ sonar {
         property "sonar.projectKey", "tp5"
         property "sonar.projectName", "TP5 - OGL"
         property "sonar.host.url", "http://localhost:9000"
-        property "sonar.token", "votre_token_ici"
+        property "sonar.token", "sqa_69f58d784f9638afb4838815067d03c116b22e55"
         property "sonar.java.coveragePlugin", "jacoco"
         property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
     }
@@ -156,69 +156,49 @@ task notifySlack {
     }
 }
 
+import javax.mail.*
+import javax.mail.internet.*
+
 task notifyEmail {
     doLast {
-        def gmailUsername = project.findProperty("gmailUsername") ?: System.getenv("GMAIL_USERNAME")
-        def gmailPassword = project.findProperty("gmailAppPassword") ?: System.getenv("GMAIL_APP_PASSWORD")
-        def recipientEmail = project.findProperty("recipientEmail") ?: System.getenv("RECIPIENT_EMAIL")
+        println "Envoi d'email en cours..."
 
         def props = new Properties()
         props.put("mail.smtp.auth", "true")
         props.put("mail.smtp.starttls.enable", "true")
         props.put("mail.smtp.host", "smtp.gmail.com")
         props.put("mail.smtp.port", "587")
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com")
         props.put("mail.smtp.ssl.protocols", "TLSv1.2")
 
-        def session = javax.mail.Session.getInstance(props,
-                new javax.mail.Authenticator() {
-                    protected javax.mail.PasswordAuthentication getPasswordAuthentication() {
-                        return new javax.mail.PasswordAuthentication(gmailUsername, gmailPassword)
-                    }
-                })
+        def username = "rafikahouda2005@gmail.com"
+        def password = "nprs cdpz fnbc assq "
+        def recipient = "rafikahouda2005@gmail.com"
 
         try {
-            def message = new javax.mail.internet.MimeMessage(session)
-            message.setFrom(new javax.mail.internet.InternetAddress(gmailUsername))
-            message.setRecipients(javax.mail.Message.RecipientType.TO,
-                    javax.mail.internet.InternetAddress.parse(recipientEmail))
-            message.setSubject("✅ Déploiement réussi - ${project.name} v${project.version}")
+            def session = Session.getInstance(props, new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(username, password)
+                }
+            })
 
-            def emailBody = """
-                <html>
-                <body style="font-family: Arial, sans-serif;">
-                    <h2 style="color: #4CAF50;">✅ Déploiement réussi!</h2>
-                    <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Projet:</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${project.name}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Version:</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${project.version}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Date:</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${new Date()}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>Status:</strong></td>
-                            <td style="padding: 10px; border: 1px solid #ddd;"> Déployé avec succès sur Maven Repository</td>
-                        </tr>
-                    </table>
-                    <p style="margin-top: 20px; color: #666;">
-                        Le déploiement a été effectué avec succès. Tous les artefacts sont disponibles sur le repository Maven.
-                    </p>
-                </body>
-                </html>
-            """
+            def message = new MimeMessage(session)
+            message.setFrom(new InternetAddress(username))
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient))
+            message.setSubject("Déploiement réussi - ${project.name}")
+            message.setText("""
+            Déploiement réussi!
 
-            message.setContent(emailBody, "text/html; charset=utf-8")
+            Projet: ${project.name}
+            Version: ${project.version}
+            Date: ${new Date()}
+                        """)
 
-            javax.mail.Transport.send(message)
-            println " Email de notification envoyé avec succès à ${recipientEmail}!"
+            Transport.send(message)
+            println "Email envoyé avec succès à ${recipient}!"
 
         } catch (Exception e) {
-            println " Erreur lors de l'envoi de l'email: ${e.message}"
+            println "Erreur: ${e.message}"
             e.printStackTrace()
         }
     }
