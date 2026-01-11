@@ -10,8 +10,9 @@ pipeline {
                 sh './gradlew clean test jacocoTestReport'
 
                 // Wrap SonarQube analysis with withSonarQubeEnv
-                withSonarQubeEnv('SonarQube') {
-                    sh 'mvn clean package sonar:sonar'
+                script {
+                    withSonarQubeEnv('SonarQube') {
+                        sh './gradlew sonar'  // Changed from mvn to gradlew
                     }
                 }
 
