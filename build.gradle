@@ -79,7 +79,7 @@ sonar {
         property "sonar.projectKey", "tp5"
         property "sonar.projectName", "TP5 - OGL"
         property "sonar.host.url", "http://localhost:9000"
-        property "sonar.token", "sqp_40ec25201409d603e8c004da1c50c9945b724555"
+        property "sonar.login", "sqp_40ec25201409d603e8c004da1c50c9945b724555"
         property "sonar.java.coveragePlugin", "jacoco"
         property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
     }
