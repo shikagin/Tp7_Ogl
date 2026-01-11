@@ -81,3 +81,66 @@ pipeline {
         }
     }
 }
+post {
+    success {
+        script {
+            // Email notification
+            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                emailext(
+                    to: 'mr_mekircha@esi.dz',
+                    subject: "✅ Jenkins SUCCESS - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                        Build succeeded!
+
+                        Job: ${env.JOB_NAME}
+                        Build: #${env.BUILD_NUMBER}
+                        URL: ${env.BUILD_URL}
+
+                        Duration: ${currentBuild.durationString}
+                    """
+                )
+            }
+
+            // Slack notification
+            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                slackSend(
+                    channel: '#jenkins',
+                    color: 'good',
+                    message: "✅ Build SUCCESS\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
+                )
+            }
+        }
+    }
+
+    failure {
+        script {
+            // Email notification
+            catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
+                emailext(
+                    to: 'mr_mekircha@esi.dz',
+                    subject: "❌ Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: """
+                        Build failed!
+
+                        Job: ${env.JOB_NAME}
+                        Build: #${env.BUILD_NUMBER}
+                        URL: ${env.BUILD_URL}
+
+                        Please check the console output.
+                    """
+                )
+            }
+
+            // Slack notification
+            catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
+                slackSend(
+                    channel: '#jenkins',
+                    color: 'danger',
+                    message: "❌ Build FAILURE\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
+                )
+            }
+        }
+    }
+}
+
+
