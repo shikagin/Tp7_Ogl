@@ -40,16 +40,18 @@ pipeline {
             }
         }
     }
-}
 
-         stage('Quality Gate') {
+
+         stage('Code Quality') {
              steps {
-                 echo ' Checking Quality Gate...'
-                 timeout(time: 5, unit: 'MINUTES') {
-                     waitForQualityGate abortPipeline: true
-                 }
+                echo '========== Phase Code Quality =========='
+
+                // Vérification du Quality Gate - arrêt en cas de Failed
+                timeout(time: 5, unit: 'MINUTES') {
+                   waitForQualityGate abortPipeline: true
+                }
              }
-         }
+          }
 
          stage('Build') {
              steps {
@@ -79,6 +81,7 @@ pipeline {
                  sh './gradlew publish -x test'
              }
          }
+}
 
 
 
