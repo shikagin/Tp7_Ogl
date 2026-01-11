@@ -46,7 +46,10 @@ jacoco {
 jacocoTestReport {
     dependsOn test
     reports {
-        html.destination file("$buildDir/reports/jacoco/html")
+        xml.required = true  // Add this - SonarQube needs XML
+        xml.outputLocation = file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
+        html.required = true
+        html.outputLocation = file("${buildDir}/reports/jacoco/html")
     }
 }
 
@@ -77,8 +80,6 @@ sonar {
     properties {
         property "sonar.projectKey", "tp5"
         property "sonar.projectName", "TP5 - OGL"
-        property "sonar.host.url", "http://localhost:9000"
-        property "sonar.login", "sqp_40ec25201409d603e8c004da1c50c9945b724555"
         property "sonar.java.coveragePlugin", "jacoco"
         property "sonar.coverage.jacoco.xmlReportPaths", "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
     }
