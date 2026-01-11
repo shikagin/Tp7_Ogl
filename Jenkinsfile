@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Test & Code Analysis') {
             steps {
-                echo '🧪 Running tests and SonarQube analysis...'
+                echo ' Running tests and SonarQube analysis...'
                 sh './gradlew clean test jacocoTestReport sonar'
 
                 // Archive test results
@@ -44,7 +44,7 @@ pipeline {
 
 //         stage('Quality Gate') {
 //             steps {
-//                 echo '✅ Checking Quality Gate...'
+//                 echo ' Checking Quality Gate...'
 //                 timeout(time: 5, unit: 'MINUTES') {
 //                     waitForQualityGate abortPipeline: true
 //                 }
@@ -53,7 +53,7 @@ pipeline {
 //
 //         stage('Build') {
 //             steps {
-//                 echo '🏗️ Building JAR and documentation...'
+//                 echo ' Building JAR and documentation...'
 //                 sh './gradlew build -x test'
 //                 sh './gradlew javadoc'
 //                 sh './gradlew sourcesJar javadocJar'
@@ -75,7 +75,7 @@ pipeline {
 //
 //         stage('Deploy') {
 //             steps {
-//                 echo '🚀 Deploying to Maven repository...'
+//                 echo ' Deploying to Maven repository...'
 //                 sh './gradlew publish -x test'
 //             }
 //         }
@@ -84,11 +84,11 @@ pipeline {
 
 //     post {
 //         failure {
-//             echo '❌ Pipeline failed! Sending failure notifications...'
+//             echo ' Pipeline failed! Sending failure notifications...'
 //             emailext (
 //                 subject: "Build Failed - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
 //                 body: """
-//                     <h2 style="color: red;">❌ Build Failed!</h2>
+//                     <h2 style="color: red;"> Build Failed!</h2>
 //                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
 //                     <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
 //                     <p><strong>Failed Stage:</strong> Check console output</p>
@@ -100,14 +100,14 @@ pipeline {
 //             )
 //         }
 //         success {
-//             echo '✅ Pipeline completed successfully!'
+//             echo ' Pipeline completed successfully!'
 //             emailext (
-//                 subject: "✅ Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+//                 subject: " Build Success - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
 //                 body: """
-//                     <h2 style="color: green;">✅ Build Successful!</h2>
+//                     <h2 style="color: green;"> Build Successful!</h2>
 //                     <p><strong>Job:</strong> ${env.JOB_NAME}</p>
 //                     <p><strong>Build:</strong> #${env.BUILD_NUMBER}</p>
-//                     <h3>📊 Available Reports:</h3>
+//                     <h3> Available Reports:</h3>
 //                     <ul>
 //                         <li><a href="${env.BUILD_URL}Unit_20Test_20Report/">Unit Test Report</a></li>
 //                         <li><a href="${env.BUILD_URL}Jacoco_20Coverage_20Report/">Jacoco Coverage Report</a></li>
