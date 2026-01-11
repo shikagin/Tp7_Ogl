@@ -100,9 +100,9 @@ pipeline {
                 // Slack notification
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     slackSend(
-                        channel: '#jenkins',
+                        channel: '#all-ogltp5',
                         color: 'good',
-                        message: "✅ Build SUCCESS\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
+                        message: " Build SUCCESS\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
                     )
                 }
             }
@@ -114,7 +114,7 @@ pipeline {
                 catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
                     emailext(
                         to: 'mr_mekircha@esi.dz',
-                        subject: "❌ Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        subject: " Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         body: """
                             Build failed!
 
@@ -132,7 +132,7 @@ pipeline {
                     slackSend(
                         channel: '#jenkins',
                         color: 'danger',
-                        message: "❌ Build FAILURE\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
+                        message: " Build FAILURE\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
                     )
                 }
             }
