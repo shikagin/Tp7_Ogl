@@ -172,7 +172,7 @@ task notifyEmail {
         props.put("mail.smtp.ssl.protocols", "TLSv1.2")
 
         def username = "rafikahouda2005@gmail.com"
-        def password = "nprs cdpz fnbc assq "
+        def password = "nprs cdpz fnbc assq"
         def recipient = "rafikahouda2005@gmail.com"
 
         try {
