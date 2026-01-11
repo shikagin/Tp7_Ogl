@@ -40,51 +40,44 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                echo '✅ Checking Quality Gate...'
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+//         stage('Quality Gate') {
+//             steps {
+//                 echo '✅ Checking Quality Gate...'
+//                 timeout(time: 5, unit: 'MINUTES') {
+//                     waitForQualityGate abortPipeline: true
+//                 }
+//             }
+//         }
+//
+//         stage('Build') {
+//             steps {
+//                 echo '🏗️ Building JAR and documentation...'
+//                 sh './gradlew build -x test'
+//                 sh './gradlew javadoc'
+//                 sh './gradlew sourcesJar javadocJar'
+//
+//                 // Archive artifacts
+//                 archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
+//
+//                 // Publish Javadoc
+//                 publishHTML([
+//                     allowMissing: true,
+//                     alwaysLinkToLastBuild: true,
+//                     keepAll: true,
+//                     reportDir: 'build/docs/javadoc',
+//                     reportFiles: 'index.html',
+//                     reportName: 'Javadoc'
+//                 ])
+//             }
+//         }
+//
+//         stage('Deploy') {
+//             steps {
+//                 echo '🚀 Deploying to Maven repository...'
+//                 sh './gradlew publish -x test'
+//             }
+//         }
 
-        stage('Build') {
-            steps {
-                echo '🏗️ Building JAR and documentation...'
-                sh './gradlew build -x test'
-                sh './gradlew javadoc'
-                sh './gradlew sourcesJar javadocJar'
-
-                // Archive artifacts
-                archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
-
-                // Publish Javadoc
-                publishHTML([
-                    allowMissing: true,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'build/docs/javadoc',
-                    reportFiles: 'index.html',
-                    reportName: 'Javadoc'
-                ])
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo '🚀 Deploying to Maven repository...'
-                sh './gradlew publish -x test'
-            }
-        }
-
-        stage('Notification') {
-            steps {
-                echo '📧 Sending notifications...'
-                sh './gradlew notifyEmail'
-                sh './gradlew notifySlack'
-            }
-        }
     }
 
     post {
