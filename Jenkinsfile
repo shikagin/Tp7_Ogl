@@ -15,7 +15,7 @@ pipeline {
                 echo ' Running tests and SonarQube analysis...'
                 sh './gradlew clean test jacocoTestReport sonar'
 
-                // Archive test results
+
                 junit '**/build/test-results/test/*.xml'
 
                 // Publish Unit Test Report
@@ -42,15 +42,15 @@ pipeline {
     }
 }
 
-//         stage('Quality Gate') {
-//             steps {
-//                 echo ' Checking Quality Gate...'
-//                 timeout(time: 5, unit: 'MINUTES') {
-//                     waitForQualityGate abortPipeline: true
-//                 }
-//             }
-//         }
-//
+         stage('Quality Gate') {
+             steps {
+                 echo ' Checking Quality Gate...'
+                 timeout(time: 5, unit: 'MINUTES') {
+                     waitForQualityGate abortPipeline: true
+                 }
+             }
+         }
+
 //         stage('Build') {
 //             steps {
 //                 echo ' Building JAR and documentation...'
@@ -73,12 +73,12 @@ pipeline {
 //             }
 //         }
 //
-//         stage('Deploy') {
-//             steps {
-//                 echo ' Deploying to Maven repository...'
-//                 sh './gradlew publish -x test'
-//             }
-//         }
+         stage('Deploy') {
+             steps {
+                 echo ' Deploying to Maven repository...'
+                 sh './gradlew publish -x test'
+             }
+         }
 
 
 
