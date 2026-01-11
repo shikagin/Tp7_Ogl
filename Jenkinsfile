@@ -5,7 +5,12 @@ pipeline {
         stage('Test & Code Analysis') {
             steps {
                 echo 'Running tests and SonarQube analysis...'
-                sh './gradlew clean test jacocoTestReport sonar'
+                sh './gradlew clean test jacocoTestReport'
+                script {
+                    withSonarQubeEnv('SonarQube') {
+                        sh './gradlew sonar'
+                    }
+                }
                 junit '**/build/test-results/test/*.xml'
 
                 // Publish Unit Test Report
