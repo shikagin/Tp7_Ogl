@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         GMAIL_USERNAME = credentials('gmail-username')
-        GMAIL_APP_PASSWORD = credentials('gmail-app-password')
+        GMAIL_APP_PASSWORD = credentials('Gmail App Password')
         RECIPIENT_EMAIL = credentials('recipient-email')
         SLACK_WEBHOOK_URL = credentials('slack-webhook-url')
     }
