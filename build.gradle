@@ -45,8 +45,9 @@ jacocoTestReport {
     dependsOn test
     reports {
         xml.required = true
+        xml.outputLocation = file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
         html.required = true
-        html.outputLocation = file("${buildDir}/reports/jacoco")
+        html.outputLocation = file("${buildDir}/reports/jacoco/html")
     }
 }
 
@@ -84,7 +85,7 @@ sonar {
     }
 }
 
-tasks.sonar.dependsOn(test)
+tasks.sonar.dependsOn(jacocoTestReport)
 
 publishing {
     publications {
