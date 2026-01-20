@@ -121,7 +121,7 @@ pipeline {
                 // Email notification
                 catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
                     emailext(
-                        to: 'mr_mekircha@esi.dz',
+                        to: 'rafikahouda2005@gmail.com',
                         subject: " Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         body: """
                             Build failed!
