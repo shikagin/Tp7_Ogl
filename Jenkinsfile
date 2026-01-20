@@ -6,10 +6,8 @@ pipeline {
             steps {
                 echo 'Running tests and SonarQube analysis...'
 
-                // Run tests and generate reports first
                 sh './gradlew clean test jacocoTestReport'
 
-                // Wrap SonarQube analysis with withSonarQubeEnv
                 script {
                     withSonarQubeEnv('SonarQube') {
                         sh './gradlew sonar'
@@ -18,7 +16,6 @@ pipeline {
 
                 junit '**/build/test-results/test/*.xml'
 
-                // Publish Unit Test Report
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -28,7 +25,6 @@ pipeline {
                     reportName: 'Unit Test Report'
                 ])
 
-                // Publish Jacoco Coverage Report
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -54,10 +50,8 @@ pipeline {
                 sh './gradlew javadoc'
                 sh './gradlew sourcesJar javadocJar'
 
-                // Archive artifacts
                 archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
 
-                // Publish Javadoc
                 publishHTML([
                     allowMissing: true,
                     alwaysLinkToLastBuild: true,
@@ -97,13 +91,26 @@ pipeline {
                     )
                 }
 
-                // Slack notification
+                // Slack notification with curl
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    slackSend(
-                        channel: '#jenkins',
-                        color: 'good',
-                        message: " Build SUCCESS\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
-                    )
+                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
+                        sh """
+                            curl -X POST -H 'Content-type: application/json' \
+                            --data '{
+                                "text": "✅ *Build SUCCESS*",
+                                "blocks": [
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "mrkdwn",
+                                            "text": "*Status:* SUCCESS ✅\\n*Job:* ${env.JOB_NAME}\\n*Build:* #${env.BUILD_NUMBER}\\n*Duration:* ${currentBuild.durationString}\\n*URL:* ${env.BUILD_URL}"
+                                        }
+                                    }
+                                ]
+                            }' \
+                            ${SLACK_WEBHOOK}
+                        """
+                    }
                 }
             }
         }
@@ -114,7 +121,7 @@ pipeline {
                 catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
                     emailext(
                         to: 'mr_mekircha@esi.dz',
-                        subject: " Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        subject: "❌ Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         body: """
                             Build failed!
 
@@ -127,13 +134,26 @@ pipeline {
                     )
                 }
 
-                // Slack notification
+                // Slack notification with curl
                 catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
-                    slackSend(
-                        channel: '#jenkins',
-                        color: 'danger',
-                        message: " Build FAILURE\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\nURL: ${env.BUILD_URL}"
-                    )
+                    withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
+                        sh """
+                            curl -X POST -H 'Content-type: application/json' \
+                            --data '{
+                                "text": "❌ *Build FAILURE*",
+                                "blocks": [
+                                    {
+                                        "type": "section",
+                                        "text": {
+                                            "type": "mrkdwn",
+                                            "text": "*Status:* FAILURE ❌\\n*Job:* ${env.JOB_NAME}\\n*Build:* #${env.BUILD_NUMBER}\\n*URL:* ${env.BUILD_URL}\\n\\nPlease check the console output."
+                                        }
+                                    }
+                                ]
+                            }' \
+                            ${SLACK_WEBHOOK}
+                        """
+                    }
                 }
             }
         }
