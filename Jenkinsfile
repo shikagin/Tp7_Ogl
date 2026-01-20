@@ -116,12 +116,13 @@ pipeline {
         }
 
         failure {
+
             script {
                 // Email notification
                 catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
                     emailext(
                         to: 'mr_mekircha@esi.dz',
-                        subject: "❌ Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                        subject: " Jenkins FAILURE - ${env.JOB_NAME} #${env.BUILD_NUMBER}",
                         body: """
                             Build failed!
 
@@ -133,6 +134,7 @@ pipeline {
                         """
                     )
                 }
+
 
                 // Slack notification with curl
                 catchError(buildResult: 'FAILURE', stageResult: 'UNSTABLE') {
