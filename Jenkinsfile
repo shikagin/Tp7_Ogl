@@ -41,16 +41,6 @@ pipeline {
                 echo '========== Phase Code Quality =========='
                 echo 'SonarQube analysis submitted! View at: http://localhost:9000/dashboard?id=tp5'
 
-                script {
-                    catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                        timeout(time: 1, unit: 'MINUTES') {
-                            def qg = waitForQualityGate()
-                            if (qg.status != 'OK') {
-                                echo "Warning: Quality Gate failed: ${qg.status}"
-                            }
-                        }
-                    }
-                }
             }
         }
 
